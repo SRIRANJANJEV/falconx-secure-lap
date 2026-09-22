@@ -1,0 +1,231 @@
+#!/bin/bash
+# FALCON-X Boot Menu
+# Terminal-based menu for FALCON-X OS
+
+FALCONX_DIR="/opt/falconx"
+DETECT_CLI="${FALCONX_DIR}/bin/falconx-detect"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+show_header() {
+    clear
+    echo -e "${CYAN}========================================${NC}"
+    echo -e "${CYAN}          FALCON-X OS${NC}"
+    echo -e "${CYAN}     NETWORK SECURITY APPLIANCE${NC}"
+    echo -e "${CYAN}========================================${NC}"
+    echo ""
+}
+
+show_system_status() {
+    show_header
+    echo -e "${BLUE}--- System Status ---${NC}"
+    echo ""
+
+    # Engine status
+    if [ -f "/var/run/falconx-engine.pid" ]; then
+        pid=$(cat /var/run/falconx-engine.pid)
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo -e "ENGINE: ${GREEN}RUNNING${NC} (PID: $pid)"
+        else
+            echo -e "ENGINE: ${RED}FAILED${NC}"
+        fi
+    else
+        echo -e "ENGINE: ${RED}STOPPED${NC}"
+    fi
+
+    # Protection state (placeholder - would query engine)
+    echo -e "PROTECTION: ${GREEN}PROTECTED${NC}"
+
+    # ML status
+    echo -e "ML: ${YELLOW}LEARNING${NC}"
+
+    # AI status
+    echo -e "AI: ${YELLOW}UNAVAILABLE${NC}"
+
+    # Firewall status
+    if command -v nft &> /dev/null; then
+        echo -e "FIREWALL: ${GREEN}ACTIVE${NC}"
+    else
+        echo -e "FIREWALL: ${RED}INACTIVE${NC}"
+    fi
+
+    # Packet rate (placeholder)
+    echo -e "PACKETS: ${YELLOW}UNKNOWN${NC}"
+
+    # Incident count (placeholder)
+    echo -e "INCIDENTS: ${YELLOW}UNKNOWN${NC}"
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_detection_engine() {
+    show_header
+    echo -e "${BLUE}--- Detection Engine ---${NC}"
+    echo ""
+
+    if [ -x "$DETECT_CLI" ]; then
+        $DETECT_CLI status
+    else
+        echo -e "${RED}Detection CLI not found${NC}"
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_network_interfaces() {
+    show_header
+    echo -e "${BLUE}--- Network Interfaces ---${NC}"
+    echo ""
+
+    if [ -x "$DETECT_CLI" ]; then
+        $DETECT_CLI interface
+    else
+        ip link show 2>/dev/null || ifconfig 2>/dev/null
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_live_capture() {
+    show_header
+    echo -e "${BLUE}--- Live Packet Capture ---${NC}"
+    echo ""
+    echo "This feature requires the detection engine to be running."
+    echo "Use the Detection Engine menu to start the engine."
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_recent_incidents() {
+    show_header
+    echo -e "${BLUE}--- Recent Incidents ---${NC}"
+    echo ""
+
+    if [ -x "$DETECT_CLI" ]; then
+        $DETECT_CLI incidents
+    else
+        echo "No incident data available"
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_firewall_status() {
+    show_header
+    echo -e "${BLUE}--- Firewall Status ---${NC}"
+    echo ""
+
+    if command -v nft &> /dev/null; then
+        echo -e "${GREEN}nftables is available${NC}"
+        echo ""
+        echo "Current ruleset:"
+        nft list ruleset 2>/dev/null || echo "Unable to list ruleset"
+    else
+        echo -e "${RED}nftables not found${NC}"
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_ai_status() {
+    show_header
+    echo -e "${BLUE}--- AI Status ---${NC}"
+    echo ""
+    echo "AI Integration: ${YELLOW}UNAVAILABLE${NC}"
+    echo ""
+    echo "AI is optional for FALCON-X operation."
+    echo "Local detection continues without AI."
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+run_safe_detection_test() {
+    show_header
+    echo -e "${BLUE}--- Safe Detection Test ---${NC}"
+    echo ""
+
+    if [ -x "$DETECT_CLI" ]; then
+        $DETECT_CLI test
+    else
+        echo -e "${RED}Detection CLI not found${NC}"
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+show_dashboard_status() {
+    show_header
+    echo -e "${BLUE}--- Dashboard Status ---${NC}"
+    echo ""
+    echo "Dashboard integration requires web server."
+    echo "Dashboard status: ${YELLOW}UNKNOWN${NC}"
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+# Main menu loop
+while true; do
+    show_header
+    echo "[1] System Status"
+    echo "[2] Detection Engine"
+    echo "[3] Network Interfaces"
+    echo "[4] Live Packet Capture"
+    echo "[5] Recent Incidents"
+    echo "[6] Firewall Status"
+    echo "[7] AI Status"
+    echo "[8] Run Safe Detection Test"
+    echo "[9] Dashboard Status"
+    echo "[0] Exit"
+    echo ""
+    read -p "Select option: " choice
+
+    case $choice in
+        1)
+            show_system_status
+            ;;
+        2)
+            show_detection_engine
+            ;;
+        3)
+            show_network_interfaces
+            ;;
+        4)
+            show_live_capture
+            ;;
+        5)
+            show_recent_incidents
+            ;;
+        6)
+            show_firewall_status
+            ;;
+        7)
+            show_ai_status
+            ;;
+        8)
+            run_safe_detection_test
+            ;;
+        9)
+            show_dashboard_status
+            ;;
+        0)
+            echo "Exiting FALCON-X menu..."
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            ;;
+    esac
+done

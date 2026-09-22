@@ -1,0 +1,24 @@
+[Unit]
+Description=FALCON-X Detection Engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/falconx/bin/falconx-detect start eth0
+ExecStop=/opt/falconx/bin/falconx-detect stop
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log /var/run
+
+[Install]
+WantedBy=multi-user.target

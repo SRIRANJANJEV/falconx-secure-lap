@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FALCON-X Dashboard</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .status-card {
+            background-color: #2a2a2a;
+            border: 1px solid #00ff00;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .status-card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #00ff00;
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status-label {
+            font-size: 12px;
+            color: #888;
+        }
+        .running { color: #00ff00; }
+        .stopped { color: #ff0000; }
+        .unknown { color: #ffff00; }
+        .protected { color: #00ff00; }
+        .unprotected { color: #ff0000; }
+        .degraded { color: #ffff00; }
+        .refresh-btn {
+            background-color: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .refresh-btn:hover {
+            background-color: #00cc00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FALCON-X DASHBOARD</h1>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <h2>ENGINE STATUS</h2>
+                <div class="status-value" id="engine-status">UNKNOWN</div>
+                <div class="status-label">Detection Engine</div>
+            </div>
+
+            <div class="status-card">
+                <h2>PROTECTION STATE</h2>
+                <div class="status-value" id="protection-state">UNKNOWN</div>
+                <div class="status-label">System Protection</div>
+            </div>
+
+            <div class="status-card">
+                <h2>PACKET RATE</h2>
+                <div class="status-value" id="packet-rate">UNKNOWN</div>
+                <div class="status-label">Packets/second</div>
+            </div>
+
+            <div class="status-card">
+                <h2>INCIDENTS</h2>
+                <div class="status-value" id="incident-count">UNKNOWN</div>
+                <div class="status-label">Total Incidents</div>
+            </div>
+
+            <div class="status-card">
+                <h2>ML STATUS</h2>
+                <div class="status-value" id="ml-status">UNKNOWN</div>
+                <div class="status-label">Machine Learning</div>
+            </div>
+
+            <div class="status-card">
+                <h2>AI STATUS</h2>
+                <div class="status-value" id="ai-status">UNKNOWN</div>
+                <div class="status-label">AI Integration</div>
+            </div>
+
+            <div class="status-card">
+                <h2>FIREWALL</h2>
+                <div class="status-value" id="firewall-status">UNKNOWN</div>
+                <div class="status-label">nftables</div>
+            </div>
+
+            <div class="status-card">
+                <h2>NETWORK INTERFACE</h2>
+                <div class="status-value" id="interface">UNKNOWN</div>
+                <div class="status-label">Monitoring Interface</div>
+            </div>
+
+            <div class="status-card">
+                <h2>CPU</h2>
+                <div class="status-value" id="cpu-percent">UNKNOWN</div>
+                <div class="status-label">CPU Usage</div>
+            </div>
+
+            <div class="status-card">
+                <h2>MEMORY</h2>
+                <div class="status-value" id="memory-percent">UNKNOWN</div>
+                <div class="status-label">Memory Usage</div>
+            </div>
+
+            <div class="status-card">
+                <h2>DISK</h2>
+                <div class="status-value" id="disk-percent">UNKNOWN</div>
+                <div class="status-label">Disk Usage</div>
+            </div>
+
+            <div class="status-card">
+                <h2>UPTIME</h2>
+                <div class="status-value" id="uptime">UNKNOWN</div>
+                <div class="status-label">Engine Uptime (seconds)</div>
+            </div>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshStatus()">REFRESH STATUS</button>
+    </div>
+
+    <script>
+        function getStatusClass(status) {
+            if (status === 'RUNNING' || status === 'PROTECTED' || status === 'ACTIVE') {
+                return 'running';
+            } else if (status === 'STOPPED' || status === 'UNPROTECTED' || status === 'INACTIVE') {
+                return 'stopped';
+            } else {
+                return 'unknown';
+            }
+        }
+
+        function getProtectionClass(status) {
+            if (status === 'PROTECTED') {
+                return 'protected';
+            } else if (status === 'UNPROTECTED') {
+                return 'unprotected';
+            } else {
+                return 'degraded';
+            }
+        }
+
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                document.getElementById('engine-status').textContent = data.engine_status || 'UNKNOWN';
+                document.getElementById('engine-status').className = 'status-value ' + getStatusClass(data.engine_status);
+
+                document.getElementById('protection-state').textContent = data.protection_state || 'UNKNOWN';
+                document.getElementById('protection-state').className = 'status-value ' + getProtectionClass(data.protection_state);
+
+                document.getElementById('packet-rate').textContent = data.current_packet_rate ? data.current_packet_rate.toFixed(2) : 'UNKNOWN';
+                document.getElementById('incident-count').textContent = data.incident_count || 'UNKNOWN';
+                document.getElementById('ml-status').textContent = data.ml_status || 'UNKNOWN';
+                document.getElementById('ai-status').textContent = data.ai_status || 'UNKNOWN';
+                document.getElementById('firewall-status').textContent = data.firewall_status || 'UNKNOWN';
+                document.getElementById('interface').textContent = data.interface || 'UNKNOWN';
+                document.getElementById('cpu-percent').textContent = data.cpu_percent ? data.cpu_percent.toFixed(1) + '%' : 'UNKNOWN';
+                document.getElementById('memory-percent').textContent = data.memory_percent ? data.memory_percent.toFixed(1) + '%' : 'UNKNOWN';
+                document.getElementById('disk-percent').textContent = data.disk_percent ? data.disk_percent.toFixed(1) + '%' : 'UNKNOWN';
+                document.getElementById('uptime').textContent = data.uptime ? Math.floor(data.uptime) + 's' : 'UNKNOWN';
+
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        // Auto-refresh every 5 seconds
+        setInterval(refreshStatus, 5000);
+
+        // Initial load
+        refreshStatus();
+    </script>
+</body>
+</html>
